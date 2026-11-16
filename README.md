@@ -34,3 +34,7 @@ scroll_direction:  # natural, classic, or system (leave as set in System Setting
 ```
 
 Only a YAML subset is supported: nested `key: value` maps and `#` comments.
+
+## License
+
+MIT, see [LICENSE](LICENSE). Portions are adapted from Scroll Reverser (Apache-2.0) and MonitorControl (MIT); see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
