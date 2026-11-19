@@ -2,7 +2,9 @@ import AppKit
 
 /// Reapplies the Dock edge so macOS updates the space available to windows.
 @MainActor
-final class DockRefresh {
+final class DockRefreshAction: Action {
+    let title = "Refresh Dock Position"
+
     private enum Edge: Int32 {
         case bottom = 2
         case left = 3
@@ -22,9 +24,22 @@ final class DockRefresh {
     private static let keepPinning: Int32 = 0
 
     private var originalEdge: Edge?
-    var isRefreshing: Bool { originalEdge != nil }
+    var isRunning: Bool { originalEdge != nil }
 
-    func start() -> Bool {
+    func run() {
+        guard !isRunning, !start() else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "Couldn’t refresh the Dock position"
+        alert.informativeText = "In System Settings → Desktop & Dock, move the Dock to another edge and then back."
+        alert.runModal()
+    }
+
+    func cancel() {
+        restore()
+    }
+
+    private func start() -> Bool {
         guard let get = Self.get, let set = Self.set else { return false }
 
         var orientation: Int32 = 0
@@ -43,7 +58,7 @@ final class DockRefresh {
         return true
     }
 
-    func restore() {
+    private func restore() {
         guard let edge = originalEdge else { return }
         Self.set?(edge.rawValue, Self.keepPinning)
         originalEdge = nil

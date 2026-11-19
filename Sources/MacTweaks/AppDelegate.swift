@@ -4,8 +4,8 @@ import ServiceManagement
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let modules: [Module] = [DockWindowsModule(), ScrollDirectionModule(), MonitorBrightnessModule()]
+    private let actions: [Action] = [DockRefreshAction()]
     private var statusItem: NSStatusItem!
-    private let dockRefresh = DockRefresh()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -19,7 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        dockRefresh.restore()
+        actions.forEach { $0.cancel() }
     }
 
     // Rebuilt on every open so checkmarks reflect the current state.
@@ -40,11 +40,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
-        if dockRefresh.isRefreshing {
-            menu.addItem(NSMenuItem(title: "Refreshing Dock Position…", action: nil, keyEquivalent: ""))
-        } else {
-            menu.addItem(item("Refresh Dock Position", #selector(refreshDockPosition)))
+        for action in actions {
+            if action.isRunning {
+                menu.addItem(NSMenuItem(title: action.title + "…", action: nil, keyEquivalent: ""))
+            } else {
+                let entry = item(action.title, #selector(runAction(_:)))
+                entry.representedObject = action
+                menu.addItem(entry)
+            }
         }
+
+        menu.addItem(.separator())
         menu.addItem(item("Open Config File…", #selector(openConfig)))
         let login = item("Launch at Login", #selector(toggleLaunchAtLogin))
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
@@ -82,14 +88,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         Config.openInEditor()
     }
 
-    @objc private func refreshDockPosition() {
-        guard !dockRefresh.isRefreshing else { return }
-        guard !dockRefresh.start() else { return }
-
-        let alert = NSAlert()
-        alert.messageText = "Couldn’t refresh the Dock position"
-        alert.informativeText = "In System Settings → Desktop & Dock, move the Dock to another edge and then back."
-        alert.runModal()
+    @objc private func runAction(_ sender: NSMenuItem) {
+        (sender.representedObject as? Action)?.run()
     }
 
     @objc private func openAccessibilitySettings() {
