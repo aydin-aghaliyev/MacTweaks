@@ -5,6 +5,7 @@ import ServiceManagement
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let modules: [Module] = [DockWindowsModule(), ScrollDirectionModule(), MonitorBrightnessModule()]
     private var statusItem: NSStatusItem!
+    private let dockRefresh = DockRefresh()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
@@ -15,6 +16,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         if !Accessibility.isTrusted() { _ = Accessibility.isTrusted(prompt: true) }
         for module in modules where isEnabled(module) { module.start() }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        dockRefresh.restore()
     }
 
     // Rebuilt on every open so checkmarks reflect the current state.
@@ -35,6 +40,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         menu.addItem(.separator())
+        if dockRefresh.isRefreshing {
+            menu.addItem(NSMenuItem(title: "Refreshing Dock Position…", action: nil, keyEquivalent: ""))
+        } else {
+            menu.addItem(item("Refresh Dock Position", #selector(refreshDockPosition)))
+        }
         menu.addItem(item("Open Config File…", #selector(openConfig)))
         let login = item("Launch at Login", #selector(toggleLaunchAtLogin))
         login.state = SMAppService.mainApp.status == .enabled ? .on : .off
@@ -70,6 +80,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func openConfig() {
         Config.openInEditor()
+    }
+
+    @objc private func refreshDockPosition() {
+        guard !dockRefresh.isRefreshing else { return }
+        guard !dockRefresh.start() else { return }
+
+        let alert = NSAlert()
+        alert.messageText = "Couldn’t refresh the Dock position"
+        alert.informativeText = "In System Settings → Desktop & Dock, move the Dock to another edge and then back."
+        alert.runModal()
     }
 
     @objc private func openAccessibilitySettings() {

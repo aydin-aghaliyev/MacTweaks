@@ -8,6 +8,8 @@ A small menu bar app bundling the macOS tweaks I actually use. No dependencies b
 - **Scroll Direction**: separate scroll direction for trackpads and mice (macOS only has one switch). Adapted from [Scroll Reverser](https://github.com/pilotmoon/scroll-reverser); see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 - **Monitor Brightness Control**: brightness sliders in the menu for the built-in display and external monitors (DDC/CI, Apple Silicon). Adapted from [MonitorControl](https://github.com/MonitorControl/MonitorControl).
 
+Use **Refresh Dock Position** from the menu if Fill expands windows behind the Dock after unplugging a display. It briefly moves the Dock to another edge and then restores its original position.
+
 ## Build
 
 ```sh
